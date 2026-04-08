@@ -126,81 +126,43 @@ var connection = new SQLiteConnectionWithLock(
 
 ## 🔄 Upgrading SQLite Version
 
-To upgrade to a newer SQLite version from the official SQLite website:
+Run the [`update.ps1`](update.ps1) script to automatically upgrade to the latest SQLite version:
 
-### Step 1: Download SQLite Source
+```powershell
+.\update.ps1
+```
 
-1. Visit [SQLite Download Page](https://www.sqlite.org/download.html)
-2. Download the **Source Code** → **sqlite-amalgamation-XXXXXXX.zip**
-3. Extract the downloaded archive
+The script performs the following steps:
 
-### Step 2: Replace Source Files
+1. **Detects the latest version** from the [SQLite Download Page](https://www.sqlite.org/download.html)
+2. **Skips if already up-to-date** by comparing with the current version in [`NuGet/package.nuspec`](NuGet/package.nuspec)
+3. **Downloads and extracts** the SQLite amalgamation zip
+4. **Replaces source files** (`sqlite3.c`, `sqlite3.h`, `sqlite3ext.h`) in [`SQLite.Universal/SourceCode/`](SQLite.Universal/SourceCode/)
+5. **Patches `sqlite3.c`** for UWP compatibility (guards `GetModuleHandleW` which is unavailable in `WINAPI_FAMILY_APP`)
+6. **Updates version** in [`NuGet/package.nuspec`](NuGet/package.nuspec) and [`sqlite3rc.h`](SQLite.Universal/SourceCode/sqlite3rc.h)
+7. **Builds all platforms** (ARM, ARM64, x64, x86) in Release configuration
+8. **Packs the NuGet package** in the [`NuGet/`](NuGet/) directory
 
-Replace the following files in [`SQLite.Universal/SourceCode/`](SQLite.Universal/SourceCode/) with the new versions:
+### Prerequisites
 
-- `sqlite3.c` → Main SQLite implementation
-- `sqlite3.h` → Header file with function declarations
-- `sqlite3ext.h` → Extension header (if available)
+- `msbuild2` available on PATH (build wrapper script)
+- `nuget` CLI available on PATH
 
-### Step 3: Update Version Information
+### Version Verification
 
-1. **Update package version** in [`NuGet/package.nuspec`](NuGet/package.nuspec):
-   ```xml
-   <version>3.XX.X</version>
-   ```
-
-2. **Update README** (this file):
-   ```markdown
-   - **Current SQLite Version**: [3.XX.X](https://www.sqlite.org/chronology.html)
-   ```
-
-### Step 4: Build and Test
-
-1. **Rebuild the solution** for all platforms:
-   - Clean solution: `Build` → `Clean Solution`
-   - Rebuild: `Build` → `Rebuild Solution`
-
-2. **Test with sample application**:
-   - Run [`Samples/TestApplicationStorage`](Samples/TestApplicationStorage/) project
-   - Verify database operations work correctly
-
-3. **Run compatibility tests**:
-   - Test on different UWP target versions
-   - Verify on all supported architectures
-
-4. **Generate nuget package**:
-   ```
-   >msbuild SQLite3.Universal.sln /p:Configuration=Release /p:Platform=ARM
-   >msbuild SQLite3.Universal.sln /p:Configuration=Release /p:Platform=ARM64
-   >msbuild SQLite3.Universal.sln /p:Configuration=Release /p:Platform=x64
-   >msbuild SQLite3.Universal.sln /p:Configuration=Release /p:Platform=x86
-   >cd Nuget & nuget pack
-   ```
-
-### Step 5: Version Verification
-
-Add version checking to your application:
+You can verify the SQLite version at runtime:
 
 ```csharp
-// Get SQLite version at runtime
 var version = SQLite3.LibVersionNumber();
 var versionString = SQLite3.LibVersion();
 Console.WriteLine($"SQLite Version: {versionString} ({version})");
 ```
-
-### Step 6: Update Documentation
-
-- Update changelog with breaking changes (if any)
-- Document new SQLite features available
-- Update NuGet package and publish
 
 ### 🔧 Troubleshooting Upgrades
 
 **Build Errors**: Check for new compilation flags or dependencies in the new SQLite version.
 
 **Runtime Issues**: Test thoroughly as newer SQLite versions may have behavioral changes.
-
-**Performance**: Benchmark critical operations to ensure no regression.
 
 **Compatibility**: Verify database files created with older versions still work.
 
