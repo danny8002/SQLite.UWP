@@ -3,7 +3,7 @@
   <metadata>
     <id>SQLite3.Universal</id>
     <readme>docs\README.md</readme>
-    <version>3.50.4</version>
+    <version>3.51.3</version>
     <title>SQLite Library for UWP</title>
     <projectUrl>https://github.com/danny8002/SQLite3.Universal</projectUrl>
     <authors>danny8002</authors>
